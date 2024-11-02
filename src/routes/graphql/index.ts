@@ -1,6 +1,13 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
-import { graphql } from 'graphql';
+import { graphql, GraphQLSchema } from 'graphql';
+import { RootQuery } from './rootQuery.js';
+import { Mutation } from './mutations.js';
+
+const schema = new GraphQLSchema({
+  query: RootQuery,
+  mutation: Mutation,
+});
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { prisma } = fastify;
@@ -15,7 +22,19 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async handler(req) {
-      // return graphql();
+      const { query, variables } = req.body;
+      try {
+        const result = await graphql({
+          schema,
+          source: query,
+          variableValues: variables,
+          contextValue: { prisma },
+        });
+        return { data: result.data, errors: result.errors || null };
+      } catch (error) {
+        fastify.log.error(error);
+        return { errors: [{ message: 'Internal server error' }] };
+      }
     },
   });
 };
