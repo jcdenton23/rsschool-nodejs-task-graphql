@@ -28,7 +28,7 @@ export interface CreateProfileDto {
 
 export interface ChangeProfileDto {
   userId: string;
-  memberTypeId?: string;
+  memberTypeId: string;
   isMale: boolean;
   yearOfBirth: number;
 }
